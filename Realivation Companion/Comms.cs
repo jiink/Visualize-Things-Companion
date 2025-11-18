@@ -78,10 +78,11 @@ namespace Realivation_Companion
             }
             return (null, null);
         }
-        private async Task HandleQuestConfirmationAsync(NetworkStream stream, IPAddress questIp)
+        private async Task HandleQuestConfirmationAsync(byte[] payload, IPAddress questIp)
         {
 
         }
+        
         private async Task HandleClientAsync(TcpClient client)
         {
             IPEndPoint remoteEndPoint = client.Client.RemoteEndPoint as IPEndPoint 
@@ -94,20 +95,21 @@ namespace Realivation_Companion
                 try
                 {
                     byte[] cmdIdBuf = new byte[1];
-                    int bytesRead = await stream.ReadAsync(cmdIdBuf);
-                    if (bytesRead == 0)
-                    {
-                        Console.WriteLine("Where are my bytes dude?");
-                    }
+                    await stream.ReadExactlyAsync(cmdIdBuf);
                     Cmd cmd = (Cmd)cmdIdBuf[0];
                     Console.WriteLine($"Got command {cmd}!");
+                    byte[] payloadLenBuf = new byte[4];
+                    await stream.ReadExactlyAsync(payloadLenBuf);
+                    int payloadLen = BitConverter.ToInt32(payloadLenBuf, 0);
+                    byte[] payload = new byte[payloadLen];
+                    await stream.ReadExactlyAsync(payload);
                     switch (cmd)
                     {
                         case Cmd.QuestConfirmation:
-                            await HandleQuestConfirmationAsync(stream, clientIp);
+                            await HandleQuestConfirmationAsync(payload, clientIp);
                             break;
                         case Cmd.Heartbeat:
-                            //await HandleHeartbeatAsync(stream, clientIp);
+                            //await HandleHeartbeatAsync(payload, clientIp);
                             break;
                         default:
                             Console.WriteLine($"I can't handle the {cmd} cmd");
