@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Serilog;
 
 namespace Realivation_Companion
 {
@@ -20,8 +21,21 @@ namespace Realivation_Companion
             FileTx,
             Heartbeat
         }
-        private string _questIpAddr = string.Empty;
-        const int REALIVATION_PORT = 33134;
+        
+        private readonly int _port;
+        private IPAddress _questIpAddr = IPAddress.None;
+        private readonly TimeSpan WATCHDOG_RESET = TimeSpan.FromSeconds(6);
+        private readonly Watchdog _watchdog;
+        public Comms(int port)
+        {
+            _port = port;
+            _watchdog = new(WATCHDOG_RESET, UnpairQuest);
+        }
+        private void UnpairQuest()
+        {
+            Log.Warning("Watchdog timer alarm, Quest {ip} unpaired", _questIpAddr);
+            _questIpAddr = IPAddress.None;
+        }
         private async Task SendFileAsync(string filePath, NetworkStream stream)
         {
             string fileName = Path.GetFileName(filePath);
@@ -42,11 +56,11 @@ namespace Realivation_Companion
         }
         public async Task SendFileToQuest(string filePath)
         {
-            if (string.IsNullOrWhiteSpace(_questIpAddr))
+            if (_questIpAddr == IPAddress.None)
             {
                 throw new Exception("No Quest is paired");
             }
-            using TcpClient client = new(_questIpAddr, REALIVATION_PORT);
+            using TcpClient client = new(new IPEndPoint(_questIpAddr, _port));
             using NetworkStream stream = client.GetStream();
             await SendFileAsync(filePath, stream);
         }
@@ -80,24 +94,38 @@ namespace Realivation_Companion
         }
         private async Task HandleQuestConfirmationAsync(byte[] payload, IPAddress questIp)
         {
-
+            Version questVersion = new(payload[0], payload[1]);
+            Log.Information("Quest connected with version {v}", questVersion);
+            _questIpAddr = questIp;
+            _watchdog.Reset();
+            _watchdog.Start();
         }
-        
+        private async Task HandleHeartbeatAsync()
+        {
+            Log.Information("(heartbeat)");
+            _watchdog.Reset();
+            _watchdog.Start();
+        }
         private async Task HandleClientAsync(TcpClient client)
         {
             IPEndPoint remoteEndPoint = client.Client.RemoteEndPoint as IPEndPoint 
                 ?? throw new Exception("Client endpoint is null");
             IPAddress clientIp = remoteEndPoint.Address;
-            Console.WriteLine($"Handling client {client.Client.RemoteEndPoint}");
+            Log.Information($"Handling client {client.Client.RemoteEndPoint}");
             using (client)
             using (NetworkStream stream = client.GetStream())
             {
                 try
                 {
+                    if (_questIpAddr != IPAddress.None &&
+                        _questIpAddr != clientIp)
+                    {
+                        throw new Exception("Got packet from a non-paired device.");
+                    }
                     byte[] cmdIdBuf = new byte[1];
                     await stream.ReadExactlyAsync(cmdIdBuf);
                     Cmd cmd = (Cmd)cmdIdBuf[0];
-                    Console.WriteLine($"Got command {cmd}!");
+                    Log.Information($"Got command {cmd}!");
                     byte[] payloadLenBuf = new byte[4];
                     await stream.ReadExactlyAsync(payloadLenBuf);
                     int payloadLen = BitConverter.ToInt32(payloadLenBuf, 0);
@@ -109,20 +137,20 @@ namespace Realivation_Companion
                             await HandleQuestConfirmationAsync(payload, clientIp);
                             break;
                         case Cmd.Heartbeat:
-                            //await HandleHeartbeatAsync(payload, clientIp);
+                            await HandleHeartbeatAsync();
                             break;
                         default:
-                            Console.WriteLine($"I can't handle the {cmd} cmd");
+                            Log.Error($"I can't handle the {cmd} cmd");
                             break;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error handling client: {ex.Message}");
+                    Log.Error($"Error handling client: {ex.Message}");
                 }
             }
         }
-        public async Task StartListening(int port)
+        public async Task StartListening()
         {
             (IPAddress? localIp, IPAddress? subnetMask) = GetLocalIPAddress();
             if (localIp == null ||  subnetMask == null)
@@ -136,9 +164,11 @@ namespace Realivation_Companion
             {
                 localNetId[i] = (byte)(localIpBytes[i] & maskBytes[i]);
             }
-            TcpListener server = new(localIp, port);
+            TcpListener server = new(localIp, _port);
             server.Start();
-            Console.WriteLine($"Listening on {localIp}:{port}. Only accepting connections on subnet: {new IPAddress(localNetId)}");
+            Log.Information("Listening on {localIp}:{_port}. " +
+                "Only accepting connections on subnet: {id}",
+                localIp, _port, new IPAddress(localNetId));
 
             while (true)
             {
@@ -161,18 +191,18 @@ namespace Realivation_Companion
 
                     if (isInSubnet)
                     {
-                        Console.WriteLine($"Connection accepted from {clientIp}");
+                        Log.Information($"Connection accepted from {clientIp}");
                         _ = HandleClientAsync(client); // not awaiting on purpose
                     }
                     else
                     {
-                        Console.WriteLine($"Connection rejected from {clientIp}");
+                        Log.Warning($"Connection rejected from {clientIp}");
                         client.Close();
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"An error occurred: {ex.Message}");
+                    Log.Error($"An error occurred: {ex.Message}");
                     client?.Close();
                 }
             }
