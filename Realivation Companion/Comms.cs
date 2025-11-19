@@ -24,11 +24,13 @@ class Comms
     
     private readonly int _port;
     private IPAddress _questIpAddr = IPAddress.None;
-    private readonly TimeSpan WATCHDOG_RESET = TimeSpan.FromSeconds(6);
+    private TcpClient? _activeQuestClient;
+    private readonly SemaphoreSlim _writeLock = new(1, 1);
+    private readonly TimeSpan WATCHDOG_RESET = TimeSpan.FromSeconds(60);
     private readonly Watchdog _watchdog;
     private CancellationTokenSource? _questConnectionCts;
-    public EventHandler QuestConnectedEvent;
-    public EventHandler QuestDisconnectedEvent;
+    public EventHandler? QuestConnectedEvent;
+    public EventHandler? QuestDisconnectedEvent;
     public Comms(int port)
     {
         _port = port;
@@ -46,19 +48,28 @@ class Comms
         }
         Log.Information("Unpairing from {ip}", _questIpAddr);
         _questIpAddr = IPAddress.None;
+        _activeQuestClient = null;
         _watchdog.Stop();
         _questConnectionCts?.Cancel();
         _questConnectionCts?.Dispose();
         _questConnectionCts = null;
-        QuestDisconnectedEvent.Invoke(this, EventArgs.Empty);
+        QuestDisconnectedEvent?.Invoke(this, EventArgs.Empty);
     }
     private async Task SendFileAsync(string filePath, NetworkStream stream)
     {
+        using var fileStream = File.OpenRead(filePath);
+        long fileContentLength = fileStream.Length;
+        const int MAX_FILE_SIZE_BYTES = 1_000_000_000;
+        if (fileContentLength > MAX_FILE_SIZE_BYTES)
+        {
+            throw new IOException($"File is too big " +
+                $"({(fileContentLength/1_000_000f):F1} MB > " +
+                $"{(MAX_FILE_SIZE_BYTES/1_000_000f):F1} MB)");
+        }
+        Log.Information("About to send the file.");
         string fileName = Path.GetFileName(filePath);
         byte[] fileNameBytes = Encoding.UTF8.GetBytes(fileName);
         byte[] fileNameLenBytes = BitConverter.GetBytes((UInt32)fileNameBytes.Length);
-        using var fileStream = File.OpenRead(filePath);
-        long fileContentLength = fileStream.Length;
         byte[] fileContentLenBytes = BitConverter.GetBytes((UInt32)fileContentLength);
         int totalPayloadLength = fileNameLenBytes.Length + 
             fileNameBytes.Length + fileContentLenBytes.Length + (int)fileContentLength;
@@ -69,16 +80,30 @@ class Comms
         await stream.WriteAsync(fileNameBytes);
         await stream.WriteAsync(fileContentLenBytes);
         await fileStream.CopyToAsync(stream);
+        Log.Information("Sent the file.");
     }
     public async Task SendFileToQuest(string filePath)
     {
-        if (_questIpAddr == IPAddress.None)
+        await _writeLock.WaitAsync();
+        try
         {
-            throw new Exception("No Quest is paired");
+            if (_activeQuestClient == null || !_activeQuestClient.Connected)
+            {
+                throw new Exception("No Quest is paired");
+            }
+            NetworkStream stream = _activeQuestClient.GetStream();
+            await SendFileAsync(filePath, stream);
+
         }
-        using TcpClient client = new(new IPEndPoint(_questIpAddr, _port));
-        using NetworkStream stream = client.GetStream();
-        await SendFileAsync(filePath, stream);
+        catch (Exception e)
+        {
+            Log.Error(e, "ugh");
+            UnpairQuest();
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
     }
     public static (IPAddress? ipAddr, IPAddress? subnetMask) GetLocalIPAddress()
     {
@@ -113,7 +138,7 @@ class Comms
         Version questVersion = new(payload[0], payload[1]);
         Log.Information("Quest connected with version {v}", questVersion);
         _questIpAddr = questIp;
-        QuestConnectedEvent.Invoke(this, EventArgs.Empty);
+        QuestConnectedEvent?.Invoke(this, EventArgs.Empty);
         _watchdog.Reset();
         _watchdog.Start();
     }
@@ -155,6 +180,7 @@ class Comms
                 UnpairQuest();
                 _questConnectionCts = new();
                 var cancelTok = _questConnectionCts.Token;
+                _activeQuestClient = client;
                 await HandleQuestConfirmationAsync(payload, clientIp);
                 while (client.Connected && !cancelTok.IsCancellationRequested)
                 {

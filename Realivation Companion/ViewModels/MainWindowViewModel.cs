@@ -23,14 +23,14 @@ namespace Realivation_Companion.ViewModels
         public MainWindowViewModel()
         {
             ShowPairingViewCommand = new RelayCommand(execute => CurrentViewModel = new PairingViewModel());
-            ShowTransferViewCommand = new RelayCommand(execute => CurrentViewModel = new TransferViewModel());
+            ShowTransferViewCommand = new RelayCommand(execute => CurrentViewModel = new TransferViewModel(_comms));
             _comms.QuestConnectedEvent += OnQuestConnected;
             _comms.QuestDisconnectedEvent += OnQuestDisconnected;
         }
 
         private void OnQuestConnected(object? sender, EventArgs e)
         {
-            CurrentViewModel = new TransferViewModel();
+            CurrentViewModel = new TransferViewModel(_comms);
         }
 
         private void OnQuestDisconnected(object? sender, EventArgs e)

@@ -7,6 +7,51 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <Label Content="WELMCOME TO TRANSFER VIEW" FontSize="30"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Label Grid.Row="0" Content="WELMCOME TO TRANSFER VIEW" FontSize="30"/>
+        <Button Grid.Row="1" x:Name="FileSubmissionArea" BorderBrush="White" BorderThickness="6" AllowDrop="True" 
+            DragEnter="OnDragEnter" DragLeave="OnDragLeave" Drop="OnDragNDrop" Visibility="Visible"
+            Click="OnFilePrompt"
+            Margin="15 5" Padding="40" >
+            <Button.Style>
+                <Style TargetType="{x:Type Button}">
+                    <Setter Property="Background" Value="#703c29" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type Button}">
+                                <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#342360" TargetName="Border" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Button.Style>
+            <Grid>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <!--Show this and hide the other when you can use this area. image aspect ratio is 4:1-->
+                    <Rectangle Width="320" Height="80" x:Name="YesDeviceIcon" Visibility="Visible">
+                        <Rectangle.Fill>
+                            <SolidColorBrush Color="#cccccc"/>
+                        </Rectangle.Fill>
+                        <Rectangle.OpacityMask>
+                            <ImageBrush ImageSource="Assets/transferIcons.png"/>
+                        </Rectangle.OpacityMask>
+                    </Rectangle>
+
+                    <TextBlock x:Name="DropText" Text="Drag &#38; Drop" FontSize="45" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" Visibility="Visible"/>
+                    <TextBlock x:Name="DropText1" Text="or click to browse" FontSize="16" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" Visibility="Visible"/>
+                    <TextBlock x:Name="DropText2" Text=" .obj, .glb, .gltf, .fbx, .stl, .ply, .3mf, .dae, .png, .jpg, .hdr" FontSize="14" Foreground="#999999" HorizontalAlignment="Center" Visibility="Visible"    Margin="0,10,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Button>
     </Grid>
 </UserControl>
