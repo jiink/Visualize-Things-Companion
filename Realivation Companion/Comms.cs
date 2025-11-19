@@ -27,6 +27,8 @@ class Comms
     private readonly TimeSpan WATCHDOG_RESET = TimeSpan.FromSeconds(6);
     private readonly Watchdog _watchdog;
     private CancellationTokenSource? _questConnectionCts;
+    public EventHandler QuestConnectedEvent;
+    public EventHandler QuestDisconnectedEvent;
     public Comms(int port)
     {
         _port = port;
@@ -48,6 +50,7 @@ class Comms
         _questConnectionCts?.Cancel();
         _questConnectionCts?.Dispose();
         _questConnectionCts = null;
+        QuestDisconnectedEvent.Invoke(this, EventArgs.Empty);
     }
     private async Task SendFileAsync(string filePath, NetworkStream stream)
     {
@@ -110,6 +113,7 @@ class Comms
         Version questVersion = new(payload[0], payload[1]);
         Log.Information("Quest connected with version {v}", questVersion);
         _questIpAddr = questIp;
+        QuestConnectedEvent.Invoke(this, EventArgs.Empty);
         _watchdog.Reset();
         _watchdog.Start();
     }

@@ -6,7 +6,7 @@ namespace Realivation_Companion.ViewModels
     {
         const int REALIVATION_PORT = 33134;
         private ViewModelBase _currentViewModel = new();
-        private Comms _comms = new(REALIVATION_PORT);
+        private readonly Comms _comms = new(REALIVATION_PORT);
         public ViewModelBase CurrentViewModel
         {
             get => _currentViewModel;
@@ -24,6 +24,18 @@ namespace Realivation_Companion.ViewModels
         {
             ShowPairingViewCommand = new RelayCommand(execute => CurrentViewModel = new PairingViewModel());
             ShowTransferViewCommand = new RelayCommand(execute => CurrentViewModel = new TransferViewModel());
+            _comms.QuestConnectedEvent += OnQuestConnected;
+            _comms.QuestDisconnectedEvent += OnQuestDisconnected;
+        }
+
+        private void OnQuestConnected(object? sender, EventArgs e)
+        {
+            CurrentViewModel = new TransferViewModel();
+        }
+
+        private void OnQuestDisconnected(object? sender, EventArgs e)
+        {
+            CurrentViewModel = new PairingViewModel();
         }
 
         // cuz logging doesnt work until the window shows up...

@@ -38,7 +38,6 @@ namespace Realivation_Companion
         {
             _timer.Change(Timeout.Infinite, Timeout.Infinite);
             RemainingTime = _initialDuration;
-            Log.Information($"Timer Reset. Remaining: {RemainingTime.TotalSeconds:F1}s");
         }
 
         public void Stop()
