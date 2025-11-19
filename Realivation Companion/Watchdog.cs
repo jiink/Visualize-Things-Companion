@@ -36,9 +36,7 @@ namespace Realivation_Companion
         
         public void Reset()
         {
-            
             _timer.Change(Timeout.Infinite, Timeout.Infinite);
-            
             RemainingTime = _initialDuration;
             Log.Information($"Timer Reset. Remaining: {RemainingTime.TotalSeconds:F1}s");
         }
@@ -56,16 +54,9 @@ namespace Realivation_Companion
 
             if (RemainingTime <= TimeSpan.Zero)
             {
-                Stop();
-                
-                RemainingTime = TimeSpan.Zero;
-                Log.Information("Countdown finished! Executing action...");
-                
+                Stop();   
+                RemainingTime = TimeSpan.Zero;                
                 _onTimerElapsed();
-            }
-            else
-            {
-                Log.Information($"Remaining: {RemainingTime.TotalSeconds:F1}s");
             }
         }
     }
