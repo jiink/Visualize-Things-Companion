@@ -87,9 +87,9 @@ class Comms
         long lastReportTime = 0;
         long lastReportBytes = 0;
 
-        while ((bytesRead = await fileStream.ReadAsync(buffer)) > 0)
+        while ((bytesRead = await fileStream.ReadAsync(buffer).ConfigureAwait(false)) > 0)
         {
-            await stream.WriteAsync(buffer.AsMemory(0, bytesRead));
+            await stream.WriteAsync(buffer.AsMemory(0, bytesRead)).ConfigureAwait(false);
             totalBytesRead += bytesRead;
             long currentTime = stopwatch.ElapsedMilliseconds;
             if (currentTime - lastReportTime >= 1000)
