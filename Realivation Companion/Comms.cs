@@ -79,7 +79,34 @@ class Comms
         await stream.WriteAsync(fileNameLenBytes);
         await stream.WriteAsync(fileNameBytes);
         await stream.WriteAsync(fileContentLenBytes);
-        await fileStream.CopyToAsync(stream);
+        byte[] buffer = new byte[65536];
+        long totalBytesRead = 0;
+        int bytesRead;
+
+        var stopwatch = Stopwatch.StartNew();
+        long lastReportTime = 0;
+        long lastReportBytes = 0;
+
+        while ((bytesRead = await fileStream.ReadAsync(buffer)) > 0)
+        {
+            await stream.WriteAsync(buffer.AsMemory(0, bytesRead));
+            totalBytesRead += bytesRead;
+            long currentTime = stopwatch.ElapsedMilliseconds;
+            if (currentTime - lastReportTime >= 1000)
+            {
+                double progressPercent = (double)totalBytesRead / fileContentLength * 100;
+                double totalMb = totalBytesRead / 1024.0 / 1024.0;
+                double timeDeltaSec = (currentTime - lastReportTime) / 1000.0;
+                double bytesDelta = totalBytesRead - lastReportBytes;
+                double speedMbPerSec = (bytesDelta / 1024.0 / 1024.0) / timeDeltaSec;
+
+                Log.Information($"Transfer: {progressPercent:F1}% | {totalMb:F1} MB | {speedMbPerSec:F1} MB/s");
+
+                lastReportTime = currentTime;
+                lastReportBytes = totalBytesRead;
+            }
+        }
+        stopwatch.Stop();
         Log.Information("Sent the file.");
     }
     public async Task SendFileToQuest(string filePath)
@@ -144,7 +171,7 @@ class Comms
     }
     private async Task HandleHeartbeatAsync()
     {
-        Log.Information("(heartbeat)");
+        //Log.Information("(heartbeat)");
         _watchdog.Reset();
         _watchdog.Start();
     }
@@ -251,6 +278,8 @@ class Comms
             try
             {
                 client = await server.AcceptTcpClientAsync();
+                client.NoDelay = true;
+                client.SendBufferSize = 65536;
                 IPEndPoint remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint 
                     ?? throw new Exception("Couldn't get remote end point on new connection");
                 IPAddress clientIp = remoteIpEndPoint.Address;
