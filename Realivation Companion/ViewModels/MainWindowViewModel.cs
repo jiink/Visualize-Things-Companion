@@ -1,48 +1,63 @@
-﻿using System.Windows.Input;
+﻿using Realivation_Companion.Views;
+using System.Windows.Input;
 
-namespace Realivation_Companion.ViewModels
+namespace Realivation_Companion.ViewModels;
+
+class MainWindowViewModel : ViewModelBase
 {
-    class MainWindowViewModel : ViewModelBase
+    const int REALIVATION_PORT = 33134;
+    private ViewModelBase _currentViewModel = new();
+    private readonly Comms _comms = new(REALIVATION_PORT);
+    private bool _isLogVisible = false;
+    public bool IsLogVisible
     {
-        const int REALIVATION_PORT = 33134;
-        private ViewModelBase _currentViewModel = new();
-        private readonly Comms _comms = new(REALIVATION_PORT);
-        public ViewModelBase CurrentViewModel
-        {
-            get => _currentViewModel;
-            set
-            {
-                _currentViewModel = value;
-                OnPropertyChanged();
-            }
+        get => _isLogVisible;
+        set {
+            _isLogVisible = value;
+            OnPropertyChanged(nameof(IsLogVisible));
         }
-
-        public ICommand ShowPairingViewCommand { get; }
-        public ICommand ShowTransferViewCommand { get; }
-
-        public MainWindowViewModel()
+    }
+    public ViewModelBase CurrentViewModel
+    {
+        get => _currentViewModel;
+        set
         {
-            ShowPairingViewCommand = new RelayCommand(execute => CurrentViewModel = new PairingViewModel());
-            ShowTransferViewCommand = new RelayCommand(execute => CurrentViewModel = new TransferViewModel(_comms));
-            _comms.QuestConnectedEvent += OnQuestConnected;
-            _comms.QuestDisconnectedEvent += OnQuestDisconnected;
+            _currentViewModel = value;
+            OnPropertyChanged();
         }
+    }
 
-        private void OnQuestConnected(object? sender, EventArgs e)
-        {
-            CurrentViewModel = new TransferViewModel(_comms);
-        }
+    public ICommand ShowPairingViewCommand { get; }
+    public ICommand ShowTransferViewCommand { get; }
+    public ICommand ShowAboutCmd => new RelayCommand(OnShowAbout);
 
-        private void OnQuestDisconnected(object? sender, EventArgs e)
-        {
-            CurrentViewModel = new PairingViewModel();
-        }
+    public MainWindowViewModel()
+    {
+        ShowPairingViewCommand = new RelayCommand(execute => CurrentViewModel = new PairingViewModel());
+        ShowTransferViewCommand = new RelayCommand(execute => CurrentViewModel = new TransferViewModel(_comms));
+        _comms.QuestConnectedEvent += OnQuestConnected;
+        _comms.QuestDisconnectedEvent += OnQuestDisconnected;
+    }
 
-        // cuz logging doesnt work until the window shows up...
-        public void RunStartupStuff()
-        {
-            CurrentViewModel = new PairingViewModel();
-            _ = _comms.StartListening();
-        }
+    private void OnQuestConnected(object? sender, EventArgs e)
+    {
+        CurrentViewModel = new TransferViewModel(_comms);
+    }
+
+    private void OnQuestDisconnected(object? sender, EventArgs e)
+    {
+        CurrentViewModel = new PairingViewModel();
+    }
+
+    // cuz logging doesnt work until the window shows up...
+    public void RunStartupStuff()
+    {
+        CurrentViewModel = new PairingViewModel();
+        _ = _comms.StartListening();
+    }
+
+    private void OnShowAbout(object? commandParameter)
+    {
+        new AboutView().Show();
     }
 }

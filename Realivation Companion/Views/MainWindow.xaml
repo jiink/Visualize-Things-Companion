@@ -7,7 +7,7 @@
         xmlns:viewmodels="clr-namespace:Realivation_Companion.ViewModels"
         Loaded="Window_Loaded"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="1200">
+        Title="MainWindow" Height="600" Width="820">
     <Window.DataContext>
         <viewmodels:MainWindowViewModel/>
     </Window.DataContext>
@@ -15,36 +15,29 @@
         <DataTemplate DataType="{x:Type viewmodels:PairingViewModel}">
             <local:PairingView/>
         </DataTemplate>
-
         <DataTemplate DataType="{x:Type viewmodels:TransferViewModel}">
             <local:TransferView/>
         </DataTemplate>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
     </Window.Resources>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-
-
-        <Grid Grid.Column="0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition/>
-            </Grid.RowDefinitions>
-            <ContentControl Grid.Row="1" Content="{Binding CurrentViewModel}" />
-            <StackPanel Grid.Row="0" Orientation="Horizontal">
-                <Button Content="Go to Pairing View" Command="{Binding ShowPairingViewCommand}" Margin="5"/>
-                <Button Content="Go to Transfer View" Command="{Binding ShowTransferViewCommand}" Margin="5"/>
-            </StackPanel>
-        </Grid>
-
-            <RichTextBox
-                x:Name="MyRichTextBox"
-                Background="Black"
-                Foreground="LightGray"
-                FontFamily="Cascadia Mono, Consolas, Courier New, monospace"
-                VerticalScrollBarVisibility="Auto"
-                Grid.Column="1"/>
-        </Grid>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_View">
+                <MenuItem Header="Log" IsCheckable="True" IsChecked="{Binding IsLogVisible, Mode=TwoWay}" />
+                <MenuItem Header="About..." Command="{Binding ShowAboutCmd}"/>
+            </MenuItem>
+        </Menu>
+        
+        <RichTextBox
+            x:Name="MyRichTextBox"
+            Background="Black"
+            Foreground="LightGray"
+            FontFamily="Cascadia Mono, Consolas, Courier New, monospace"
+            FontSize="10"
+            VerticalScrollBarVisibility="Auto"
+            DockPanel.Dock="Right" Width="270"
+            Visibility="{Binding IsLogVisible, Converter={StaticResource BoolToVisConverter}}"/>
+        
+        <ContentControl Grid.Column="0" Content="{Binding CurrentViewModel}" />
+    </DockPanel>
 </Window>
