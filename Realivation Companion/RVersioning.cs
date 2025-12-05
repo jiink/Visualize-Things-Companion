@@ -9,11 +9,21 @@ namespace Realivation_Companion
 {
     internal static class RVersioning
     {
-        public static int GetVersionNum()
+        public static int GetProtocolNum()
         {
             Version v = Assembly.GetExecutingAssembly().GetName().Version
                 ?? throw new Exception("Couldn't get my own version number");
             return v.Major;
+        }
+        public static int GetVersionNum()
+        {
+            Version v = Assembly.GetExecutingAssembly().GetName().Version
+                ?? throw new Exception("Couldn't get my own version number");
+            return v.Minor;
+        }
+        public static string GetVersionStr()
+        {
+            return $"{GetProtocolNum()}.{GetVersionNum()}";
         }
     }
 }

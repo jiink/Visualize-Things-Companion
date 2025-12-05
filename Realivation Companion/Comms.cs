@@ -158,8 +158,17 @@ class Comms
     }
     private async Task HandleQuestConfirmationAsync(byte[] payload, IPAddress questIp)
     {
-        Version questVersion = new(payload[0], payload[1]);
-        Log.Information("Quest connected with version {v}", questVersion);
+        int questProtcol = payload[0];
+        int questVersion = payload[1];
+        Log.Information("Quest connected with version {0}.{1}", questProtcol, questVersion);
+        if (questProtcol != RVersioning.GetProtocolNum())
+        {
+            Log.Error("Protocol mismatch! PC expects {0}, Quest sent {1}. Rejecting.",
+                RVersioning.GetProtocolNum, questProtcol);
+            // Throwing here will be caught by the calling function and close the connection
+            throw new Exception("Protocol version mismatch");
+
+        }
         _questIpAddr = questIp;
         QuestConnectedEvent?.Invoke(this, EventArgs.Empty);
         _watchdog.Reset();
