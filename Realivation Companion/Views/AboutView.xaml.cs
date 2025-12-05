@@ -12,5 +12,6 @@ public partial class AboutView : Window
         Owner = Application.Current.MainWindow;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         InitializeComponent();
+        VersionField.Text = $"version {RVersioning.GetVersionNum()}";
     }
 }

@@ -10,7 +10,10 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Orientation="Vertical" Margin="10">
             <TextBlock TextWrapping="Wrap">
-                Realivation Companion
+            Realivation Companion
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" x:Name="VersionField"/>
+            <TextBlock TextWrapping="Wrap">
                 <LineBreak/>
                 Jiink Studios
                 <LineBreak/>

@@ -26,6 +26,7 @@ class MainWindowViewModel : ViewModelBase
             OnPropertyChanged();
         }
     }
+    public string WindowTitle { get; }
 
     public ICommand ShowPairingViewCommand { get; }
     public ICommand ShowTransferViewCommand { get; }
@@ -33,6 +34,7 @@ class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
+        WindowTitle = $"Realivation Companion v{RVersioning.GetVersionNum()}";
         ShowPairingViewCommand = new RelayCommand(execute => CurrentViewModel = new PairingViewModel());
         ShowTransferViewCommand = new RelayCommand(execute => CurrentViewModel = new TransferViewModel(_comms));
         _comms.QuestConnectedEvent += OnQuestConnected;
