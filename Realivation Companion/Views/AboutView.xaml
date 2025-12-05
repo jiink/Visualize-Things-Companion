@@ -20,7 +20,11 @@
                 <LineBreak/>
                 This app is meant to be used with the Realivation app for Meta Quest.
                 <LineBreak/>
+                <Hyperlink NavigateUri="https://jiink.github.io/realivation-site" RequestNavigate="Hyperlink_RequestNavigate">
+                    https://jiink.github.io/realivation-site
+                </Hyperlink>
             </TextBlock>
+            
             <TextBlock FontSize="20">Acknowledgements</TextBlock>
             <TextBlock FontSize="16">QRCoder</TextBlock>
             <TextBlock TextWrapping="Wrap">The MIT License (MIT)

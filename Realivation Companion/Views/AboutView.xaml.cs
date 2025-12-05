@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Windows;
+using System.Windows.Navigation;
 
 namespace Realivation_Companion.Views;
 
@@ -13,5 +15,11 @@ public partial class AboutView : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         InitializeComponent();
         VersionField.Text = $"version {RVersioning.GetVersionNum()}";
+    }
+
+    private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+        e.Handled = true;
     }
 }
