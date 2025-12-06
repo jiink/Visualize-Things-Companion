@@ -38,6 +38,7 @@
             DockPanel.Dock="Right" Width="270"
             Visibility="{Binding IsLogVisible, Converter={StaticResource BoolToVisConverter}}"/>
         
-        <ContentControl Grid.Column="0" Content="{Binding CurrentViewModel}" />
+        <ContentControl Grid.Column="0" Content="{Binding CurrentViewModel}">
+        </ContentControl>
     </DockPanel>
 </Window>

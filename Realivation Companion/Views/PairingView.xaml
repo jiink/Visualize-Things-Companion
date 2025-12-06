@@ -5,21 +5,34 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Realivation_Companion.Views" xmlns:viewmodels="clr-namespace:Realivation_Companion.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:PairingViewModel}"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="600" d:DesignWidth="800">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
     </UserControl.Resources>
     <Grid>
-        <StackPanel Orientation="Vertical">
-            <TextBlock Text="Scan with your Quest 3 in the Realivation app to pair" FontSize="40" TextWrapping="Wrap" Padding="10"/>
-            <TextBlock Text="Make sure they're on the same network" FontSize="25" TextWrapping="Wrap" Padding="10"/>
+        <Grid.Background>
+            <LinearGradientBrush EndPoint="1,0" StartPoint="0,1">
+                <GradientStop Color="#FF6C2C2D"/>
+                <GradientStop Color="#FF182329" Offset="1"/>
+            </LinearGradientBrush>
+        </Grid.Background>
+        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+            <TextBlock Text="Pair your headset" FontSize="40" TextWrapping="Wrap" Padding="10" Foreground="White" HorizontalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold"/>
+            <TextBlock FontSize="19" TextWrapping="Wrap" Foreground="White" HorizontalAlignment="Center" Width="300" TextAlignment="Center">
+                <Run Text="Scan with your Meta Quest 3 in the"/>
+                <Run Text="Realivation" FontWeight="Bold"/>
+                <Run Text="app to pair."/>
+            </TextBlock>
             <Image
                Source="{Binding QrCodeImage}"
                Stretch="Uniform"
                Width="250"
                Height="250"
-                Visibility="{Binding QrSuccess, Converter={StaticResource BoolToVisConverter}}"/>
-            <TextBlock Text="{Binding MessageTxt}" FontSize="30"/>
+                Visibility="{Binding QrSuccess, Converter={StaticResource BoolToVisConverter}}"
+                Margin="30"/>
+            <Border Background="#D9D9D9" CornerRadius="20" Padding="15,8" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding MessageTxt, FallbackValue='Blah blah blah blah blah blah'}" FontSize="20" TextAlignment="Center" HorizontalAlignment="Center"/>
+            </Border>
         </StackPanel> 
     </Grid>
 </UserControl>

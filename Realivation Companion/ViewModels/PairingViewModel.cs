@@ -23,7 +23,7 @@ class PairingViewModel : ViewModelBase
         else
         {
             QrSuccess = true;
-            MessageTxt = "";
+            MessageTxt = "Make sure they're on the same network.";
             QrCodeText = ip;
             GenerateQrCode();
         }
