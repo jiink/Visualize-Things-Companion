@@ -27,6 +27,8 @@ class Comms
     private CancellationTokenSource? _questConnectionCts;
     public EventHandler? QuestConnectedEvent;
     public EventHandler? QuestDisconnectedEvent;
+    public EventHandler? ProgressUpdateEvent;
+    public double TransferProgress = 0;
     public Comms(int port)
     {
         _port = port;
@@ -36,7 +38,7 @@ class Comms
             }
         );
     }
-    private void UnpairQuest()
+    public void UnpairQuest()
     {
         if (_questIpAddr == IPAddress.None)
         {
@@ -90,20 +92,24 @@ class Comms
             long currentTime = stopwatch.ElapsedMilliseconds;
             if (currentTime - lastReportTime >= 1000)
             {
-                double progressPercent = (double)totalBytesRead / fileContentLength * 100;
+                TransferProgress = (double)totalBytesRead / fileContentLength;
+                double progressPercent = TransferProgress * 100;
                 double totalMb = totalBytesRead / 1024.0 / 1024.0;
                 double timeDeltaSec = (currentTime - lastReportTime) / 1000.0;
                 double bytesDelta = totalBytesRead - lastReportBytes;
                 double speedMbPerSec = (bytesDelta / 1024.0 / 1024.0) / timeDeltaSec;
 
                 Log.Information($"Transfer: {progressPercent:F1}% | {totalMb:F1} MB | {speedMbPerSec:F1} MB/s");
+                ProgressUpdateEvent?.Invoke(this, EventArgs.Empty);
 
                 lastReportTime = currentTime;
                 lastReportBytes = totalBytesRead;
             }
         }
         stopwatch.Stop();
-        Log.Information("Sent the file.");
+        TransferProgress = 0;
+        ProgressUpdateEvent?.Invoke(this, EventArgs.Empty);
+        Log.Information("Sent the file. Took {0} ms", stopwatch.ElapsedMilliseconds);
     }
     public async Task SendFileToQuest(string filePath)
     {
