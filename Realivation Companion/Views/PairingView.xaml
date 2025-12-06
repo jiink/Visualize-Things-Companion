@@ -20,7 +20,7 @@
             <TextBlock Text="Pair your headset" FontSize="40" TextWrapping="Wrap" Padding="10" Foreground="White" HorizontalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold"/>
             <TextBlock FontSize="19" TextWrapping="Wrap" Foreground="White" HorizontalAlignment="Center" Width="300" TextAlignment="Center">
                 <Run Text="Scan with your Meta Quest 3 in the"/>
-                <Run Text="Realivation" FontWeight="Bold"/>
+                <Run Text="Visualize Things" FontWeight="Bold"/>
                 <Run Text="app to pair."/>
             </TextBlock>
             <Image

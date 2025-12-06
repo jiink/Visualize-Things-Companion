@@ -34,7 +34,7 @@ class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        WindowTitle = $"Realivation Companion v{RVersioning.GetVersionNum()}";
+        WindowTitle = $"Visualize Things Companion v{RVersioning.GetVersionNum()}";
         ShowPairingViewCommand = new RelayCommand(execute => CurrentViewModel = new PairingViewModel());
         ShowTransferViewCommand = new RelayCommand(execute => CurrentViewModel = new TransferViewModel(_comms));
         _comms.QuestConnectedEvent += OnQuestConnected;
